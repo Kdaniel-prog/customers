@@ -7,6 +7,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Custom implementation of the UserDetails interface for Spring Security.
+ * This class is used to wrap a Customer object and provide necessary user details for authentication and authorization.
+ *
+ * @Author Kiszel Dániel
+ * @Date 2025-04-26
+ */
 public class UserPrincipal implements UserDetails {
 
     private final Customer user;

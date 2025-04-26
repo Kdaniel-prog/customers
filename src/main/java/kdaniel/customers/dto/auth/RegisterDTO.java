@@ -2,11 +2,15 @@ package kdaniel.customers.dto.auth;
 
 
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class RegisterDTO {
 
     @NotBlank(message = "Username must not be empty")
@@ -34,4 +38,5 @@ public class RegisterDTO {
     @NotBlank(message = "Role must not be empty")
     @Pattern(regexp = "ADMIN|USER", message = "Role must be either 'ADMIN' or 'USER'")
     private String role;
+
 }

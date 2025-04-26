@@ -4,6 +4,7 @@ import kdaniel.customers.dto.customer.CustomerDTO;
 import kdaniel.customers.dto.customer.EditCustomerDTO;
 import kdaniel.customers.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -59,8 +60,14 @@ public class CustomerController {
      */
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
-    public ResponseEntity<CustomerDTO> getCustomer(@PathVariable Long id) {
-        return ResponseEntity.ok(this.customerService.getCustomer(id));
+    public ResponseEntity<CustomerDTO> getCustomerById(@PathVariable Long id) {
+        CustomerDTO customerDTO = customerService.getCustomer(id);
+
+        if (customerDTO == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);  // Return 404 if not found
+        }
+
+        return new ResponseEntity<>(customerDTO, HttpStatus.OK);  // Return 200 if found
     }
 
     /**
@@ -86,7 +93,7 @@ public class CustomerController {
      */
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCustomer(@PathVariable Long id) {
         this.customerService.deleteCustomer(id);
         return ResponseEntity.ok().build();

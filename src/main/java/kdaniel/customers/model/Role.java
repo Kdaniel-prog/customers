@@ -20,4 +20,9 @@ public class Role implements Serializable {
 
     @Column(nullable = false, unique = true)
     private String name;
+
+    public Role(String name) {
+        this.name = name;
+    }
+
 }

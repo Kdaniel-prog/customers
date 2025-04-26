@@ -6,6 +6,7 @@ import kdaniel.customers.dto.auth.LoginDTO;
 import kdaniel.customers.dto.auth.RegisterDTO;
 import kdaniel.customers.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,15 +32,24 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Void> register(@Valid @RequestBody RegisterDTO user) {
-        service.register(user);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Void> register(@RequestBody RegisterDTO registerDTO) {
+        try {
+            service.register(registerDTO);
+            return ResponseEntity.status(HttpStatus.CREATED).build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();  // Hibás adatok esetén
+        }
     }
 
     @PostMapping("/login")
     public ResponseEntity<JWTResponseDTO> login(@Valid @RequestBody LoginDTO user) {
-        JWTResponseDTO token = service.login(user);
-        return ResponseEntity.ok(token);
+        try {
+            JWTResponseDTO token = service.login(user);
+            return ResponseEntity.ok(token);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
     }
 
 }

@@ -1,6 +1,7 @@
 package kdaniel.customers.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -46,5 +47,15 @@ public class Customer implements Serializable {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private Date updatedAt;
+
+    public Customer(long id, String username, String fullName, String password, byte age, Role role) {
+        this.id = id;
+        this.username = username;
+        this.fullName = fullName;
+        this.password = password;
+        this.age = age;
+        this.role = role;
+    }
+
 
 }

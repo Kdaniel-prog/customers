@@ -187,7 +187,7 @@ public class CustomerService implements UserDetailsService {
             throw new FieldValidationException(errors);
         }
 
-        this.roleRepository.deleteById(id);
+        this.customerRepository.deleteById(id);
     }
 
     /**
