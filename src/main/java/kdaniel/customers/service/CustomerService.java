@@ -6,6 +6,7 @@ import kdaniel.customers.model.Role;
 import kdaniel.customers.repository.RoleRepository;
 import org.modelmapper.Conditions;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.transaction.annotation.Transactional;
 import kdaniel.customers.dto.auth.JWTResponseDTO;
@@ -151,18 +152,40 @@ public class CustomerService implements UserDetailsService {
     }
 
     @Transactional
-    public void editCustomer(EditCustomerDTO editCustomerDTO) {
+    public Map<String, String> editCustomer(EditCustomerDTO editCustomerDTO) {
         Map<String, String> errors = new HashMap<>();
+        Map<String, String> token = new HashMap<>();
         Customer customer = this.customerRepository.findCustomerById(editCustomerDTO.getId());
 
         if (Objects.isNull(customer)) {
             errors.put("user", "not exist");
             throw new FieldValidationException(errors);
         }
+
         modelMapper.map(editCustomerDTO, customer);
-        if (editCustomerDTO.getPassword() != null && editCustomerDTO.getPassword().length() > 6) {
+        if (editCustomerDTO.getPassword() != null) {
+            if (editCustomerDTO.getPassword().length() < 6) {
+                errors.put("password", "Password must be at least 6 characters long.");
+                throw new FieldValidationException(errors);
+            }
             customer.setPassword(encoder.encode(editCustomerDTO.getPassword()));
         }
+
         this.customerRepository.save(customer);
+
+        //If we changed the logged user we need to provide a new token
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        System.out.println(currentUsername);
+        Customer currentUser = this.customerRepository.findCustomerByUsername(currentUsername);
+
+        if(currentUser.getId().equals(editCustomerDTO.getId())) {
+            UserDetails userDetails = new User(
+                    customer.getUsername(),
+                    customer.getPassword(),
+                    List.of(new SimpleGrantedAuthority("ROLE_" + customer.getRole().getName()))
+            );
+            token.put("token", jwtService.generateToken(userDetails));
+        }
+        return token;
     }
 }

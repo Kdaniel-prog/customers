@@ -13,7 +13,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
+ * @Description: for user registration and login.
+ * Handles requests for registering and logging in users.
  *
+ * @Author: Kiszel Dániel
+ * @Date: 2025-04-26
  */
 
 @RestController
@@ -27,7 +31,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity register(@Valid @RequestBody RegisterDTO user) {
+    public ResponseEntity<Void> register(@Valid @RequestBody RegisterDTO user) {
         service.register(user);
         return ResponseEntity.ok().build();
     }

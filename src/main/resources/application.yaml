@@ -16,7 +16,7 @@ spring:
         - classpath:data.sql
 
 cors:
-  allowed-origins: "http://localhost:4200,http://localhost:4201,http://localhost:4202"
+  allowed-origins: "http://127.0.0.1"
 
 db:
   url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1

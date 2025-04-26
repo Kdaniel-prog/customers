@@ -7,6 +7,14 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import java.util.List;
 
+/**
+ * @Author Kiszel Dániel
+ * @Date 2025-04-26
+ * @Description Controller for managing customers.
+ * Handles requests for getting customer data, modifying customer details,
+ * and deleting customers. Only accessible to ADMIN for sensitive actions.
+ */
+
 @Configuration
 @EnableWebMvc
 public class CorsFilterConfiguration implements WebMvcConfigurer {
@@ -16,8 +24,8 @@ public class CorsFilterConfiguration implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/customers")
-                .allowedOrigins("*")  // Allow all origins for /customers
+        registry.addMapping("/**")
+                .allowedOrigins(String.valueOf(allowedOrigins))
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH")
                 .allowedHeaders("*");
     }

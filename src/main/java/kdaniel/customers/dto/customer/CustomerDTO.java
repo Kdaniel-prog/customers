@@ -10,6 +10,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class CustomerDTO {
     private String fullName;
-    private Integer age;
+    private byte age;
     private String email;
 }
