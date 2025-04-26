@@ -26,5 +26,5 @@ public interface CustomerRepository extends JpaRepository<Customer,Long> {
     @NativeQuery("SELECT FULL_NAME, AGE, EMAIL FROM Customer WHERE id =:id")
     CustomerDTO getCustomer(Long id);
 
-    Customer findCustomerByUsername(String currentUsername);
+    Optional<Customer> findCustomerByUsername(String currentUsername);
 }

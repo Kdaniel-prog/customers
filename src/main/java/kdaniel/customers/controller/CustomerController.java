@@ -68,14 +68,14 @@ public class CustomerController {
      * @Description Modifies an existing customer based on the provided fields.
      * Only non-null fields will be updated.
      * Only accessible by users with the ADMIN role.
+     * IF admin using his/her admin account than we will provide newToken
      * @Param customerDTO - Data for editing the customer.
      */
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping
     public ResponseEntity<Map<String, String>> modifyCustomer(@RequestBody EditCustomerDTO customerDTO) {
-        this.customerService.editCustomer(customerDTO);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(this.customerService.editCustomer(customerDTO));
     }
 
     /**

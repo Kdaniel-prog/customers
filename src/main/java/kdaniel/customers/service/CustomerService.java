@@ -151,41 +151,40 @@ public class CustomerService implements UserDetailsService {
         this.roleRepository.deleteById(id);
     }
 
-    @Transactional
     public Map<String, String> editCustomer(EditCustomerDTO editCustomerDTO) {
         Map<String, String> errors = new HashMap<>();
         Map<String, String> token = new HashMap<>();
-        Customer customer = this.customerRepository.findCustomerById(editCustomerDTO.getId());
+        Customer editCustomer = this.customerRepository.findCustomerById(editCustomerDTO.getId());
 
-        if (Objects.isNull(customer)) {
+
+        if (Objects.isNull(editCustomer)) {
             errors.put("user", "not exist");
             throw new FieldValidationException(errors);
         }
 
-        modelMapper.map(editCustomerDTO, customer);
+        modelMapper.map(editCustomerDTO, editCustomer);
         if (editCustomerDTO.getPassword() != null) {
             if (editCustomerDTO.getPassword().length() < 6) {
                 errors.put("password", "Password must be at least 6 characters long.");
                 throw new FieldValidationException(errors);
             }
-            customer.setPassword(encoder.encode(editCustomerDTO.getPassword()));
+            editCustomer.setPassword(encoder.encode(editCustomerDTO.getPassword()));
         }
-
-        this.customerRepository.save(customer);
 
         //If we changed the logged user we need to provide a new token
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        System.out.println(currentUsername);
-        Customer currentUser = this.customerRepository.findCustomerByUsername(currentUsername);
-
-        if(currentUser.getId().equals(editCustomerDTO.getId())) {
+        Optional<Customer> currentUser = this.customerRepository.findCustomerByUsername(currentUsername);
+        if(currentUser.isPresent() && currentUser.get().getId().equals(editCustomerDTO.getId())) {
             UserDetails userDetails = new User(
-                    customer.getUsername(),
-                    customer.getPassword(),
-                    List.of(new SimpleGrantedAuthority("ROLE_" + customer.getRole().getName()))
+                    currentUser.get().getUsername(),
+                    currentUser.get().getPassword(),
+                    List.of(new SimpleGrantedAuthority("ROLE_" + currentUser.get().getRole().getName()))
             );
-            token.put("token", jwtService.generateToken(userDetails));
+            token.put("newToken", jwtService.generateToken(userDetails));
         }
+
+        this.customerRepository.save(editCustomer);
+
         return token;
     }
 }
