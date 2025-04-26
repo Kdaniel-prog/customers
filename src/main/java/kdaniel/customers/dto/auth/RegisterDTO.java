@@ -12,6 +12,7 @@ public class RegisterDTO {
     @NotBlank(message = "Username must not be empty")
     private String username;
 
+    @Min(value = 6, message = "Password must be 6 characters")
     @NotBlank(message = "Password must not be empty")
     private String password;
 
