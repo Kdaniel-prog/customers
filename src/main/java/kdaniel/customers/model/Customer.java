@@ -34,10 +34,6 @@ public class Customer {
     @Column(nullable = false)
     private byte age;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinColumn(name = "address_id")
-    private Address address;
-
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;

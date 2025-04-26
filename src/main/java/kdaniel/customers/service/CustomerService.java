@@ -1,8 +1,12 @@
 package kdaniel.customers.service;
 
 import kdaniel.customers.dto.customer.CustomerDTO;
+import kdaniel.customers.dto.customer.EditCustomerDTO;
 import kdaniel.customers.model.Role;
 import kdaniel.customers.repository.RoleRepository;
+import org.modelmapper.Conditions;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.transaction.annotation.Transactional;
 import kdaniel.customers.dto.auth.JWTResponseDTO;
 import kdaniel.customers.dto.auth.LoginDTO;
@@ -77,6 +81,7 @@ public class CustomerService implements UserDetailsService {
 
         Customer user = modelMapper.map(request, Customer.class);
         user.setPassword(encoder.encode(request.getPassword()));
+        user.setRole(role);
         customerRepository.save(user);
     }
 
@@ -94,10 +99,10 @@ public class CustomerService implements UserDetailsService {
             throw new FieldValidationException(errors);
         }
 
-        UserDetails userDetails = new org.springframework.security.core.userdetails.User(
+        UserDetails userDetails = new User(
                 user.getUsername(),
                 user.getPassword(),
-                Collections.emptyList()
+                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName()))
         );
 
         String token = jwtService.generateToken(userDetails);
@@ -128,5 +133,36 @@ public class CustomerService implements UserDetailsService {
 
     public List<CustomerDTO> getAgeBetween18And40() {
         return this.customerRepository.getCustomerBetween18And40();
+    }
+
+    public CustomerDTO getCustomer(Long id) {
+        return this.customerRepository.getCustomer(id);
+    }
+
+    public void deleteCustomer(Long id) {
+        Map<String, String> errors = new HashMap<>();
+
+        if (!customerRepository.existsById(id)) {
+            errors.put("user", "not exist");
+            throw new FieldValidationException(errors);
+        }
+
+        this.roleRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void editCustomer(EditCustomerDTO editCustomerDTO) {
+        Map<String, String> errors = new HashMap<>();
+        Customer customer = this.customerRepository.findCustomerById(editCustomerDTO.getId());
+
+        if (Objects.isNull(customer)) {
+            errors.put("user", "not exist");
+            throw new FieldValidationException(errors);
+        }
+        modelMapper.map(editCustomerDTO, customer);
+        if (editCustomerDTO.getPassword() != null && editCustomerDTO.getPassword().length() > 6) {
+            customer.setPassword(encoder.encode(editCustomerDTO.getPassword()));
+        }
+        this.customerRepository.save(customer);
     }
 }
