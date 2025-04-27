@@ -1,8 +1,6 @@
 package kdaniel.customers.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
-import kdaniel.customers.dto.auth.JWTResponseDTO;
 import kdaniel.customers.dto.auth.LoginDTO;
 import kdaniel.customers.dto.auth.RegisterDTO;
 import kdaniel.customers.service.CustomerService;
@@ -46,14 +44,12 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<JWTResponseDTO> login(@Valid @RequestBody LoginDTO user) {
+    public ResponseEntity<Map<String, String>> login(@Valid @RequestBody LoginDTO user) {
         try {
-            JWTResponseDTO token = service.login(user);
-            return ResponseEntity.ok(token);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return ResponseEntity.ok(service.login(user));
+        } catch (FieldValidationException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrors());
         }
-
     }
 
 }

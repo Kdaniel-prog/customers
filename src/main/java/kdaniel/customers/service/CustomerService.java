@@ -8,7 +8,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.transaction.annotation.Transactional;
-import kdaniel.customers.dto.auth.JWTResponseDTO;
 import kdaniel.customers.dto.auth.LoginDTO;
 import kdaniel.customers.dto.auth.RegisterDTO;
 import kdaniel.customers.model.Customer;
@@ -96,7 +95,7 @@ public class CustomerService implements UserDetailsService {
      * @Return JWTResponseDTO containing the generated token.
      * @Throws FieldValidationException If authentication fails.
      */
-    public JWTResponseDTO login(LoginDTO request) {
+    public Map<String, String> login(LoginDTO request) {
         Customer user = customerRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new FieldValidationException("username", "not found"));
 
@@ -109,9 +108,9 @@ public class CustomerService implements UserDetailsService {
                 user.getPassword(),
                 List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName()))
         );
-
-        String token = jwtService.generateToken(userDetails);
-        return new JWTResponseDTO(token);
+        Map<String, String> token = new HashMap<>();
+        token.put("token", jwtService.generateToken(userDetails));
+        return token;
     }
 
     /**

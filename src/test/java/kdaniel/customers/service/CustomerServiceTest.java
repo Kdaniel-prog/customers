@@ -3,7 +3,6 @@ package kdaniel.customers.service;
 import kdaniel.customers.dto.auth.RoleDTO;
 import kdaniel.customers.dto.customer.CustomerDTO;
 import kdaniel.customers.dto.customer.EditCustomerDTO;
-import kdaniel.customers.dto.auth.JWTResponseDTO;
 import kdaniel.customers.dto.auth.LoginDTO;
 import kdaniel.customers.dto.auth.RegisterDTO;
 import kdaniel.customers.model.Customer;
@@ -116,7 +115,7 @@ class CustomerServiceTest {
         LoginDTO loginDTO = new LoginDTO("username", "password123");
 
         try {
-            JWTResponseDTO response = customerService.login(loginDTO);
+            Map<String, String> response = customerService.login(loginDTO);
             assertNotNull(response);
         } catch (FieldValidationException e) {
             fail("Login failed with valid credentials");

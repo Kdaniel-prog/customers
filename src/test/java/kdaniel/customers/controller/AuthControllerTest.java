@@ -1,7 +1,6 @@
 package kdaniel.customers.controller;
 
 import kdaniel.customers.dto.auth.LoginDTO;
-import kdaniel.customers.dto.auth.JWTResponseDTO;
 import kdaniel.customers.dto.auth.RegisterDTO;
 import kdaniel.customers.dto.auth.RoleDTO;
 import kdaniel.customers.service.CustomerService;
@@ -21,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -58,26 +58,30 @@ public class AuthControllerTest {
     public void testLogin_Success() {
         // Arrange: Mock the response from the customerService and jwtService
         String token = "mock-jwt-token";
-        JWTResponseDTO jwtResponseDTO = new JWTResponseDTO(token);
+        Map<String, String> jwtResponseDTO = new HashMap<>();
+        jwtResponseDTO.put("token",token);
 
         when(customerService.login(any(LoginDTO.class))).thenReturn(jwtResponseDTO);
 
-        ResponseEntity<JWTResponseDTO> response = authController.login(loginDTO);
+        ResponseEntity<Map<String, String>> response = authController.login(loginDTO);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         Assertions.assertNotNull(response.getBody());
-        assertEquals(token, response.getBody().getToken());
+        assertEquals(token, response.getBody().get("token"));
     }
 
     @Test
     public void testLogin_Failure_InvalidCredentials() {
         // Arrange: Mock invalid credentials response
         when(customerService.login(any(LoginDTO.class)))
-                .thenThrow(new RuntimeException("Invalid credentials"));
+                .thenThrow(new FieldValidationException("username","Username must not be empty"));
 
-        ResponseEntity<JWTResponseDTO> response = authController.login(loginDTO);
+        LoginDTO loginDTO = new LoginDTO("username", "wrongpassword");
 
-        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        ResponseEntity<Map<String, String>> response = authController.login(loginDTO);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertTrue(response.getBody().containsKey("username"));
     }
 
     @Test
