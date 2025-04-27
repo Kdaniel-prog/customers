@@ -3,8 +3,10 @@ package kdaniel.customers.controller;
 import kdaniel.customers.dto.auth.LoginDTO;
 import kdaniel.customers.dto.auth.JWTResponseDTO;
 import kdaniel.customers.dto.auth.RegisterDTO;
+import kdaniel.customers.dto.auth.RoleDTO;
 import kdaniel.customers.service.CustomerService;
 import kdaniel.customers.service.JWTService;
+import kdaniel.customers.util.FieldValidationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +17,9 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -46,7 +51,7 @@ public class AuthControllerTest {
         registerDTO.setPassword("testpassword");
         registerDTO.setConfirmEmail("test@test.com");
         registerDTO.setEmail("test@test.com");
-        registerDTO.setRole("USER");
+        registerDTO.setRole(RoleDTO.USER);
     }
 
     @Test
@@ -80,23 +85,29 @@ public class AuthControllerTest {
         // Arrange: Simulate successful registration (void method does nothing)
         doNothing().when(customerService).register(any(RegisterDTO.class));
 
+        ResponseEntity<Map<String, String>> response = authController.register(registerDTO);
 
-        ResponseEntity<Void> response = authController.register(registerDTO);
-
-
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 
     @Test
     public void testRegister_Failure_UsernameExists() {
         // Arrange: Simulate failure where the username already exists
-        Mockito.doThrow(new RuntimeException("Username already exists"))
+        RegisterDTO registerDTO = new RegisterDTO("existingUser", "password123", "Existing User", "user@example.com", "user@example.com", (byte) 25, RoleDTO.USER);
+
+        Mockito.doThrow(new FieldValidationException("Username","Username already exists"))
                 .when(customerService)
                 .register(any(RegisterDTO.class));
 
-        ResponseEntity<Void> response = authController.register(registerDTO);
+        // Act: Call the register endpoint
+        ResponseEntity<Map<String, String>> response = authController.register(registerDTO);
 
+        // Assert: Ensure the response has a BAD_REQUEST status
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Map<String, String> error = new HashMap<>();
+        error.put("Username", "Username already exists");
+        // Assert: Ensure the error message is correct
+        assertEquals(error, response.getBody());
     }
 
 }

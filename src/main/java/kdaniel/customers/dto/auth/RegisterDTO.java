@@ -2,6 +2,8 @@ package kdaniel.customers.dto.auth;
 
 
 import jakarta.validation.constraints.*;
+import kdaniel.customers.dto.validator.EnumValidator;
+import kdaniel.customers.model.Role;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,14 +14,16 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RegisterDTO {
-
+    @Max(value = 255, message = "username is too long")
     @NotBlank(message = "Username must not be empty")
     private String username;
 
+    @Max(value = 255, message = "password is too long")
     @Min(value = 6, message = "Password must be 6 characters")
     @NotBlank(message = "Password must not be empty")
     private String password;
 
+    @Max(value = 255, message = "fullName is too long")
     @NotBlank(message = "Full name must not be empty")
     private String fullName;
 
@@ -35,8 +39,8 @@ public class RegisterDTO {
     @Max(value = 127, message = "Age is too high")
     private byte age;
 
-    @NotBlank(message = "Role must not be empty")
-    @Pattern(regexp = "ADMIN|USER", message = "Role must be either 'ADMIN' or 'USER'")
-    private String role;
+    @NotNull(message = "Role must not be empty")
+    @EnumValidator(enumClass = Role.class, message = "Role must be either 'ADMIN' or 'USER'")
+    private RoleDTO role;
 
 }

@@ -33,7 +33,6 @@ import java.util.stream.Stream;
  */
 @Service
 public class CustomerService implements UserDetailsService {
-
     private final CustomerRepository customerRepository;
     private final RoleRepository roleRepository;
     private final JWTService jwtService;
@@ -62,6 +61,13 @@ public class CustomerService implements UserDetailsService {
     public void register(RegisterDTO request) {
         Map<String, String> errors = new HashMap<>();
 
+        Role role = roleRepository.findByName(String.valueOf(request.getRole()))
+                .orElse(null);
+
+        if (role == null) {
+            errors.put("role", "Role not found");
+        }
+
         if (!request.getEmail().equals(request.getConfirmEmail())) {
             errors.put("confirmEmail", "Emails do not match");
         }
@@ -72,17 +78,6 @@ public class CustomerService implements UserDetailsService {
 
         if (customerRepository.existsByUsername(request.getUsername())) {
             errors.put("username", "Username already exists");
-        }
-
-        if (!errors.isEmpty()) {
-            throw new FieldValidationException(errors);
-        }
-
-        Role role = roleRepository.findByName(request.getRole())
-                .orElse(null);
-
-        if (role == null) {
-            errors.put("role", "Role not found");
         }
 
         if (!errors.isEmpty()) {
@@ -102,17 +97,11 @@ public class CustomerService implements UserDetailsService {
      * @Throws FieldValidationException If authentication fails.
      */
     public JWTResponseDTO login(LoginDTO request) {
-        Map<String, String> errors = new HashMap<>();
-
         Customer user = customerRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> {
-                    errors.put("username", "not found");
-                    return new FieldValidationException(errors);
-                });
+                .orElseThrow(() -> new FieldValidationException("username", "not found"));
 
         if (!encoder.matches(request.getPassword(), user.getPassword())) {
-            errors.put("password", "bad password");
-            throw new FieldValidationException(errors);
+            throw new FieldValidationException("password", "bad password");
         }
 
         UserDetails userDetails = new User(
@@ -131,6 +120,7 @@ public class CustomerService implements UserDetailsService {
      * @Return UserDetails containing user information.
      * @Throws UsernameNotFoundException If the user is not found.
      */
+    @Transactional(readOnly = true)
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return customerRepository.findByUsername(username)
@@ -143,7 +133,7 @@ public class CustomerService implements UserDetailsService {
      * @Return A map containing the average age.
      */
     @Transactional(readOnly = true)
-    public Map<String, Integer> getAvarageAge() {
+    public Map<String, Double> getAverageAge() {
         try (Stream<Customer> customerStream = customerRepository.streamAllCustomers()) {
             double avg = customerStream
                     .filter(c -> c.getAge() != null)
@@ -151,9 +141,11 @@ public class CustomerService implements UserDetailsService {
                     .average()
                     .orElse(0.0);
 
-            Map<String, Integer> result = new HashMap<>();
-            result.put("avarageAge", (int) Math.round(avg));
+            Map<String, Double> result = new HashMap<>();
+            result.put("averageAge", avg);
             return result;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -161,6 +153,7 @@ public class CustomerService implements UserDetailsService {
      * @Description Returns a list of customers aged between 18 and 40.
      * @Return List of CustomerDTO objects.
      */
+    @Transactional(readOnly = true)
     public List<CustomerDTO> getAgeBetween18And40() {
         return this.customerRepository.getCustomerBetween18And40();
     }
@@ -170,6 +163,7 @@ public class CustomerService implements UserDetailsService {
      * @Param id The customer's ID.
      * @Return CustomerDTO containing customer details.
      */
+    @Transactional(readOnly = true)
     public CustomerDTO getCustomer(Long id) {
         return this.customerRepository.getCustomer(id);
     }
@@ -180,11 +174,8 @@ public class CustomerService implements UserDetailsService {
      * @Throws FieldValidationException If the customer does not exist.
      */
     public void deleteCustomer(Long id) {
-        Map<String, String> errors = new HashMap<>();
-
         if (!customerRepository.existsById(id)) {
-            errors.put("user", "not exist");
-            throw new FieldValidationException(errors);
+            throw new FieldValidationException("user", "not exist");
         }
 
         this.customerRepository.deleteById(id);
@@ -198,23 +189,20 @@ public class CustomerService implements UserDetailsService {
      * @Throws FieldValidationException If validation fails.
      */
     public Map<String, String> editCustomer(EditCustomerDTO editCustomerDTO) {
-        Map<String, String> errors = new HashMap<>();
         Map<String, String> token = new HashMap<>();
-        Customer editCustomer = this.customerRepository.findCustomerById(editCustomerDTO.getId());
+        Optional<Customer> editCustomer = this.customerRepository.findCustomerById(editCustomerDTO.getId());
 
-        if (Objects.isNull(editCustomer)) {
-            errors.put("user", "not exist");
-            throw new FieldValidationException(errors);
+        if (editCustomer.isEmpty()) {
+            throw new FieldValidationException("user", "not exist");
         }
 
-        modelMapper.map(editCustomerDTO, editCustomer);
+        modelMapper.map(editCustomerDTO, editCustomer.get());
 
         if (editCustomerDTO.getPassword() != null) {
             if (editCustomerDTO.getPassword().length() < 6) {
-                errors.put("password", "Password must be at least 6 characters long.");
-                throw new FieldValidationException(errors);
+                throw new FieldValidationException("password", "Password must be at least 6 characters long.");
             }
-            editCustomer.setPassword(encoder.encode(editCustomerDTO.getPassword()));
+            editCustomer.get().setPassword(encoder.encode(editCustomerDTO.getPassword()));
         }
 
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -228,7 +216,7 @@ public class CustomerService implements UserDetailsService {
             token.put("newToken", jwtService.generateToken(userDetails));
         }
 
-        this.customerRepository.save(editCustomer);
+        this.customerRepository.save(editCustomer.get());
 
         return token;
     }

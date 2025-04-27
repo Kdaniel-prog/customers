@@ -15,7 +15,7 @@ public interface CustomerRepository extends JpaRepository<Customer,Long> {
     Optional<Customer> findByUsername(String username);
     Boolean existsByUsername(String username);
     Boolean existsByEmail(String email);
-    Customer findCustomerById(@NotBlank(message = "Id must not be empty") Long id);
+    Optional<Customer> findCustomerById(@NotBlank(message = "Id must not be empty") Long id);
 
     @Query("SELECT c FROM Customer c")
     Stream<Customer> streamAllCustomers();

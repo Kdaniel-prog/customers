@@ -1,5 +1,6 @@
 package kdaniel.customers.service;
 
+import kdaniel.customers.dto.auth.RoleDTO;
 import kdaniel.customers.dto.customer.CustomerDTO;
 import kdaniel.customers.dto.customer.EditCustomerDTO;
 import kdaniel.customers.dto.auth.JWTResponseDTO;
@@ -24,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -60,7 +62,7 @@ class CustomerServiceTest {
         role.setName("ADMIN");
 
         // Initialize DTOs and Customer objects
-        registerDTO = new RegisterDTO("user1", "password123", "Full Name", "test@example.com", "test@example.com", (byte) 25, "USER");
+        registerDTO = new RegisterDTO("user1", "password123", "Full Name", "test@example.com", "test@example.com", (byte) 25, RoleDTO.ADMIN);
         loginDTO = new LoginDTO("user1", "password123");
         editCustomerDTO = new EditCustomerDTO(1L, "user1", "new@example.com", "newPassword123", "etest@test.hu", (byte) 30);
         customer = new Customer(1L, "username", "test@example.com", "password123", (byte) 30, role);
@@ -81,7 +83,7 @@ class CustomerServiceTest {
         // Arrange: Mock repository methods
         when(customerRepository.existsByEmail(registerDTO.getEmail())).thenReturn(false);
         when(customerRepository.existsByUsername(registerDTO.getUsername())).thenReturn(false);
-        when(roleRepository.findByName(registerDTO.getRole())).thenReturn(Optional.of(new Role("USER")));
+        when(roleRepository.findByName(String.valueOf(registerDTO.getRole()))).thenReturn(Optional.of(new Role("USER")));
 
         // Act: Call register method
         customerService.register(registerDTO);
@@ -135,19 +137,19 @@ class CustomerServiceTest {
     }
 
     @Test
-    void testGetAvarageAge() {
+    void testGetAverageAge() {
         // Arrange: Mock repository stream
         Customer customer1 = new Customer();
         customer1.setAge((byte) 20);
         Customer customer2 = new Customer();
         customer2.setAge((byte) 40);
-        when(customerRepository.streamAllCustomers()).thenReturn(List.of(customer, customer1, customer2).stream());
+        when(customerRepository.streamAllCustomers()).thenReturn(Stream.of(customer, customer1, customer2));
 
-        // Act: Call getAvarageAge method
-        Map<String, Integer> result = customerService.getAvarageAge();
+        // Act: Call getAverageAge method
+        Map<String, Double> result = customerService.getAverageAge();
 
         // Assert: Verify average age calculation
-        assertEquals(30, result.get("avarageAge"));
+        assertEquals(30, result.get("averageAge"));
     }
 
     @Test
@@ -175,7 +177,7 @@ class CustomerServiceTest {
         token.put("newToken", "new-jwt-token");
 
         // Mock repository és JWT service
-        when(customerRepository.findCustomerById(customer.getId())).thenReturn(customer);
+        when(customerRepository.findCustomerById(customer.getId())).thenReturn(Optional.ofNullable(customer));
         when(customerRepository.findCustomerByUsername(customer.getUsername())).thenReturn(Optional.ofNullable(customer));
         when(customerRepository.save(any(Customer.class))).thenReturn(customer);
         when(jwtService.generateToken(any(UserDetails.class))).thenReturn("new-jwt-token");

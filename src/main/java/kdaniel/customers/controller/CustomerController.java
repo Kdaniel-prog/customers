@@ -32,13 +32,17 @@ public class CustomerController {
     }
 
     /**
-     * @GetMapping("/customer/avarageAge")
+     * @GetMapping("/customer/averageAge")
      * @Description Calculates and returns the average age of all customers.
      * @Return A map containing the average age.
      */
-    @GetMapping("/avarageAge")
-    public ResponseEntity<Map<String, Integer>> getAvarageAge() {
-        return ResponseEntity.ok(customerService.getAvarageAge());
+    @GetMapping("/averageAge")
+    public ResponseEntity<Map<String, Double>> getAverageAge() {
+        try {
+            return ResponseEntity.ok(customerService.getAverageAge());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
     }
 
     /**

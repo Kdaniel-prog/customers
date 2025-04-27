@@ -1,10 +1,12 @@
 package kdaniel.customers.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import kdaniel.customers.dto.auth.JWTResponseDTO;
 import kdaniel.customers.dto.auth.LoginDTO;
 import kdaniel.customers.dto.auth.RegisterDTO;
 import kdaniel.customers.service.CustomerService;
+import kdaniel.customers.util.FieldValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +14,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 /**
  * @Description: for user registration and login.
@@ -32,12 +36,12 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Void> register(@RequestBody RegisterDTO registerDTO) {
+    public ResponseEntity<Map<String, String>> register(@RequestBody RegisterDTO registerDTO) {
         try {
             service.register(registerDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();  // Hibás adatok esetén
+            return ResponseEntity.ok().build();
+        } catch (FieldValidationException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getErrors());
         }
     }
 

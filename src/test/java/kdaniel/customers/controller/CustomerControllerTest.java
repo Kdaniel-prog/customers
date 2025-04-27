@@ -66,6 +66,7 @@ public class CustomerControllerTest {
 
         // Assert: Check that status code is 200 and the customer data matches
         assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
         assertEquals("John Doe", response.getBody().getFullName());
         assertEquals("john.doe@example.com", response.getBody().getEmail());
         assertEquals(30, response.getBody().getAge());
@@ -103,18 +104,19 @@ public class CustomerControllerTest {
     }
 
     @Test
-    public void testGetAvarageAge() {
+    public void testGetAverageAge_ReturnAverageAge() {
         // Arrange: Mock a response for average age
-        Map<String, Integer> averageAge = new HashMap<>();
-        averageAge.put("averageAge", 30);
-        when(customerService.getAvarageAge()).thenReturn(averageAge);
+        Map<String, Double> averageAge = new HashMap<>();
+        averageAge.put("averageAge", 30.0);
+        when(customerService.getAverageAge()).thenReturn(averageAge);
 
         // Act: Call the controller method directly
-        ResponseEntity<Map<String, Integer>> response = customerController.getAvarageAge();
+        ResponseEntity<Map<String, Double>> response = customerController.getAverageAge();
 
         // Assert: Verify response
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(30, response.getBody().get("averageAge"));
+        assertNotNull(response.getBody());
+        assertEquals(30.0, response.getBody().get("averageAge"));
     }
 
     @Test
