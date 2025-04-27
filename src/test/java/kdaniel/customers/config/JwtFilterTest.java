@@ -14,6 +14,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+import java.io.PrintWriter;
+
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -41,6 +43,7 @@ class JwtFilterTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         jwtFilter = new JwtFilter(customerService, jwtService);
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -61,7 +64,10 @@ class JwtFilterTest {
         String invalidJwt = "invalid.jwt.token";
         when(request.getHeader("Authorization")).thenReturn("Bearer " + invalidJwt);
         when(jwtService.extractUsername(invalidJwt)).thenReturn("testuser");
-        when(jwtService.isTokenValid(invalidJwt, null)).thenReturn(false);
+
+        UserDetails userDetails = mock(UserDetails.class);
+        when(customerService.loadUserByUsername("testuser")).thenReturn(userDetails);
+        when(jwtService.isTokenValid(invalidJwt, userDetails)).thenReturn(false);
 
         // Act: Call doFilterInternal
         jwtFilter.doFilterInternal(request, response, filterChain);
@@ -102,6 +108,10 @@ class JwtFilterTest {
         // Simulate a UsernameNotFoundException
         when(customerService.loadUserByUsername("testuser")).thenThrow(new UsernameNotFoundException("Username not found"));
 
+        // Mock the PrintWriter for the response
+        PrintWriter writer = mock(PrintWriter.class);
+        when(response.getWriter()).thenReturn(writer);
+
         // Act: Call doFilterInternal
         jwtFilter.doFilterInternal(request, response, filterChain);
 
@@ -109,5 +119,6 @@ class JwtFilterTest {
         verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         verify(response).setContentType("application/json");
         verify(response).getWriter();
+        verify(writer).write(contains("Username not found"));
     }
 }

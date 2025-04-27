@@ -17,7 +17,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -105,7 +104,6 @@ class CustomerServiceTest {
 
     @Test
     public void testLogin_Success() {
-        // Létrehozunk egy tesztfelhasználót
         String password = "password123";
         String encodedPassword = new BCryptPasswordEncoder().encode(password); // Kódoljuk a jelszót
 
@@ -113,10 +111,8 @@ class CustomerServiceTest {
         when(customerRepository.findByUsername("username")).thenReturn(Optional.of(customer));
         when(encoder.matches("password123", encodedPassword)).thenReturn(true); // Ellenőrizzük, hogy a jelszó megfelel
 
-        // Létrehozzuk a LoginDTO-t
         LoginDTO loginDTO = new LoginDTO("username", "password123");
 
-        // Teszteljük a login metódust
         try {
             JWTResponseDTO response = customerService.login(loginDTO);
             assertNotNull(response);
@@ -141,7 +137,11 @@ class CustomerServiceTest {
     @Test
     void testGetAvarageAge() {
         // Arrange: Mock repository stream
-        when(customerRepository.streamAllCustomers()).thenReturn(List.of(customer).stream());
+        Customer customer1 = new Customer();
+        customer1.setAge((byte) 20);
+        Customer customer2 = new Customer();
+        customer2.setAge((byte) 40);
+        when(customerRepository.streamAllCustomers()).thenReturn(List.of(customer, customer1, customer2).stream());
 
         // Act: Call getAvarageAge method
         Map<String, Integer> result = customerService.getAvarageAge();

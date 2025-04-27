@@ -34,7 +34,7 @@ public class Customer implements Serializable {
     private String email;
 
     @Column(nullable = false)
-    private byte age;
+    private Byte age;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)

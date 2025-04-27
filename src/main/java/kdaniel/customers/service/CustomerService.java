@@ -146,7 +146,7 @@ public class CustomerService implements UserDetailsService {
     public Map<String, Integer> getAvarageAge() {
         try (Stream<Customer> customerStream = customerRepository.streamAllCustomers()) {
             double avg = customerStream
-                    .filter(c -> Objects.nonNull(c.getAge()))
+                    .filter(c -> c.getAge() != null)
                     .mapToDouble(Customer::getAge)
                     .average()
                     .orElse(0.0);
