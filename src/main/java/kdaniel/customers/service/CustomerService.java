@@ -7,8 +7,8 @@ import kdaniel.customers.dto.customer.EditCustomerDTO;
 import kdaniel.customers.model.ResponseModel;
 import kdaniel.customers.model.Role;
 import kdaniel.customers.repository.RoleRepository;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
@@ -108,13 +108,13 @@ public class CustomerService implements UserDetailsService {
             throw new FieldValidationException("password", "bad password");
         }
 
-        UserDetails userDetails = new User(
+        UserPrincipal userPrincipal = new UserPrincipal(
                 user.getUsername(),
-                user.getPassword(),
-                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName()))
+                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName())),
+                user.getRole()
         );
 
-        return new ResponseModel<>(true, new TokenDTO(jwtService.generateToken(userDetails)));
+        return new ResponseModel<>(true, new TokenDTO(jwtService.generateToken(userPrincipal)));
     }
 
     /**
@@ -127,7 +127,7 @@ public class CustomerService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return customerRepository.findByUsername(username)
-                .map(UserPrincipal::new)
+                .map(customer -> new UserPrincipal(customer.getUsername(),null, customer.getRole()))
                 .orElseThrow(() -> new FieldValidationException("username", "not found"));
     }
 
@@ -213,16 +213,22 @@ public class CustomerService implements UserDetailsService {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<Customer> currentUser = this.customerRepository.findCustomerByUsername(currentUsername);
         if (currentUser.isPresent() && currentUser.get().getId().equals(editCustomerDTO.getId())) {
-            UserDetails userDetails = new User(
+            UserPrincipal userPrincipal = new UserPrincipal(
                     currentUser.get().getUsername(),
-                    currentUser.get().getPassword(),
-                    List.of(new SimpleGrantedAuthority("ROLE_" + currentUser.get().getRole().getName()))
-            );
-            token.put("newToken", jwtService.generateToken(userDetails));
+                    List.of(new SimpleGrantedAuthority("ROLE_" + currentUser.get().getRole().getName())),
+                    currentUser.get().getRole()
+                    );
+            token.put("newToken", jwtService.generateToken(userPrincipal));
         }
 
         this.customerRepository.save(editCustomer.get());
 
         return token;
+    }
+
+    public ResponseModel<Page<CustomerDTO>> getCustomers(Pageable pageable) {
+        Page<CustomerDTO> customers = customerRepository.findAllCustomers(pageable)
+                .map(customer -> modelMapper.map(customer, CustomerDTO.class));
+        return new ResponseModel<>(true, customers);
     }
 }

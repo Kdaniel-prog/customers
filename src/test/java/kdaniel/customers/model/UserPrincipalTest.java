@@ -26,7 +26,7 @@ class UserPrincipalTest {
         when(customer.getRole()).thenReturn(role);
 
         // Create UserPrincipal instance
-        userPrincipal = new UserPrincipal(customer);
+        userPrincipal = new UserPrincipal(customer.getUsername(),null, role);
     }
 
     @Test
@@ -45,7 +45,7 @@ class UserPrincipalTest {
         String password = userPrincipal.getPassword();
 
         // Assert: Ensure password is correctly returned
-        assertEquals("password", password);
+        assertEquals("", password);
     }
 
     @Test

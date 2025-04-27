@@ -6,7 +6,9 @@ import kdaniel.customers.dto.customer.EditCustomerDTO;
 import kdaniel.customers.model.ResponseModel;
 import kdaniel.customers.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -64,6 +66,19 @@ public class CustomerController {
     @GetMapping("/{id}")
     public ResponseEntity<ResponseModel<CustomerDTO>> getCustomerById(@PathVariable Long id) {
         return ResponseEntity.ok(customerService.getCustomer(id));
+    }
+
+    /**
+     * @GetMapping("/customer")
+     * @Description Returns customer's details.
+     * Only accessible by users with the ADMIN role.
+     * @Param Pageable.
+     * @Return Page<CustomerDTO>.
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping()
+    public ResponseEntity<ResponseModel<Page<CustomerDTO>>>  getCustomers(@PageableDefault(size = 10) Pageable pageable) {
+        return ResponseEntity.ok(customerService.getCustomers(pageable));
     }
 
     /**
