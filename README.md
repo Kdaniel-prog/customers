@@ -22,6 +22,6 @@ Spring Boot REST API JWT alapú authentikációval, H2 adatbázissal.
 ## 👤 Jogosultságok összefoglaló
 
 - **USER**:
-  - Eléri: `/customer/avarageAge`, `/customer/between18And40`
+  - Elérési út: `/customer/avarageAge`, `/customer/between18And40`
 - **ADMIN**:
   - Minden végpontot elér.
