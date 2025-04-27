@@ -15,7 +15,7 @@ import java.util.Map;
  * @Description Global exception handler to manage custom and validation exceptions.
  * Handles FieldValidationException and MethodArgumentNotValidException across the application.
  */
-
+ 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 

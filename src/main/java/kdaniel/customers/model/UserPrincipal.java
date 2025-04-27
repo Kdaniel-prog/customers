@@ -30,6 +30,11 @@ public class UserPrincipal implements UserDetails {
         this.role = role;
     }
 
+    public UserPrincipal(String username, Role role) {
+        this.username = username;
+        this.role = role;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.getName()));

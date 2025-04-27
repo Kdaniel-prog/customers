@@ -121,14 +121,14 @@ public class CustomerService implements UserDetailsService {
      * @Description Loads user details by username for Spring Security authentication.
      * @Param username The username to load.
      * @Return UserDetails containing user information.
-     * @Throws UsernameNotFoundException If the user is not found.
+     * @Throws FieldValidationException If the user is not found.
      */
     @Transactional(readOnly = true)
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String username) {
         return customerRepository.findByUsername(username)
-                .map(customer -> new UserPrincipal(customer.getUsername(),null, customer.getRole()))
-                .orElseThrow(() -> new FieldValidationException("username", "not found"));
+                .map(customer -> new UserPrincipal(customer.getUsername(), customer.getRole()))
+                .orElse(null);
     }
 
     /**
