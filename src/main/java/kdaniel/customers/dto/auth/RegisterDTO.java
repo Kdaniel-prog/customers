@@ -40,7 +40,6 @@ public class RegisterDTO {
     private byte age;
 
     @NotNull(message = "Role must not be empty")
-    @EnumValidator(enumClass = Role.class, message = "Role must be either 'ADMIN' or 'USER'")
     private RoleDTO role;
 
 }
