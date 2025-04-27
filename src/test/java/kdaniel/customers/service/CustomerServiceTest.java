@@ -1,11 +1,14 @@
 package kdaniel.customers.service;
 
 import kdaniel.customers.dto.auth.RoleDTO;
+import kdaniel.customers.dto.auth.TokenDTO;
+import kdaniel.customers.dto.customer.AverageAgeDTO;
 import kdaniel.customers.dto.customer.CustomerDTO;
 import kdaniel.customers.dto.customer.EditCustomerDTO;
 import kdaniel.customers.dto.auth.LoginDTO;
 import kdaniel.customers.dto.auth.RegisterDTO;
 import kdaniel.customers.model.Customer;
+import kdaniel.customers.model.ResponseModel;
 import kdaniel.customers.model.Role;
 import kdaniel.customers.repository.CustomerRepository;
 import kdaniel.customers.repository.RoleRepository;
@@ -106,16 +109,16 @@ class CustomerServiceTest {
     @Test
     public void testLogin_Success() {
         String password = "password123";
-        String encodedPassword = new BCryptPasswordEncoder().encode(password); // Kódoljuk a jelszót
+        String encodedPassword = new BCryptPasswordEncoder().encode(password);
 
         Customer customer = new Customer(1L, "username","Full name", encodedPassword,  (byte) 30, new Role("ADMIN"));
         when(customerRepository.findByUsername("username")).thenReturn(Optional.of(customer));
-        when(encoder.matches("password123", encodedPassword)).thenReturn(true); // Ellenőrizzük, hogy a jelszó megfelel
+        when(encoder.matches("password123", encodedPassword)).thenReturn(true);
 
         LoginDTO loginDTO = new LoginDTO("username", "password123");
 
         try {
-            Map<String, String> response = customerService.login(loginDTO);
+            ResponseModel<TokenDTO> response = customerService.login(loginDTO);
             assertNotNull(response);
         } catch (FieldValidationException e) {
             fail("Login failed with valid credentials");
@@ -129,9 +132,7 @@ class CustomerServiceTest {
         when(encoder.matches(loginDTO.getPassword(), customer.getPassword())).thenReturn(false);
 
         // Act & Assert: FieldValidationException should be thrown for bad password
-        FieldValidationException exception = assertThrows(FieldValidationException.class, () -> {
-            customerService.login(loginDTO);
-        });
+        FieldValidationException exception = assertThrows(FieldValidationException.class, () -> customerService.login(loginDTO));
         assertTrue(exception.getErrors().containsKey("password"));
     }
 
@@ -145,25 +146,23 @@ class CustomerServiceTest {
         when(customerRepository.streamAllCustomers()).thenReturn(Stream.of(customer, customer1, customer2));
 
         // Act: Call getAverageAge method
-        Map<String, Double> result = customerService.getAverageAge();
+        ResponseModel<AverageAgeDTO> result = customerService.getAverageAge();
 
         // Assert: Verify average age calculation
-        assertEquals(30, result.get("averageAge"));
+        assertEquals(30, result.getData().getAverageAge());
     }
 
     @Test
     void testGetAgeBetween18And40() {
         // Arrange: Mock repository method
-        when(customerRepository.getCustomerBetween18And40()).thenReturn(
-                List.of(new CustomerDTO("user1", (byte) 25, "user1@example.com"))
-        );
+        when(customerRepository.getCustomerBetween18And40()).thenReturn(List.of(new CustomerDTO("user1", (byte) 25, "user1@example.com")));
 
         // Act: Call getAgeBetween18And40 method
-        List<CustomerDTO> result = customerService.getAgeBetween18And40();
+        ResponseModel<List<CustomerDTO>> result = customerService.getAgeBetween18And40();
 
         // Assert: Verify the returned list
-        assertFalse(result.isEmpty());
-        assertEquals(25, result.get(0).getAge());
+        assertFalse(result.getData().isEmpty());
+        assertEquals(25, result.getData().get(0).getAge());
     }
 
     @Test

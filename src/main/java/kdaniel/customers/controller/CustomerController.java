@@ -1,7 +1,9 @@
 package kdaniel.customers.controller;
 
+import kdaniel.customers.dto.customer.AverageAgeDTO;
 import kdaniel.customers.dto.customer.CustomerDTO;
 import kdaniel.customers.dto.customer.EditCustomerDTO;
+import kdaniel.customers.model.ResponseModel;
 import kdaniel.customers.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -37,12 +39,8 @@ public class CustomerController {
      * @Return A map containing the average age.
      */
     @GetMapping("/averageAge")
-    public ResponseEntity<Map<String, Double>> getAverageAge() {
-        try {
-            return ResponseEntity.ok(customerService.getAverageAge());
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+    public ResponseEntity<ResponseModel<AverageAgeDTO>> getAverageAge() {
+        return ResponseEntity.ok(customerService.getAverageAge());
     }
 
     /**
@@ -51,7 +49,7 @@ public class CustomerController {
      * @Return List of CustomerDTOs.
      */
     @GetMapping("/between18And40")
-    public ResponseEntity<List<CustomerDTO>> getBetween18And40() {
+    public ResponseEntity<ResponseModel<List<CustomerDTO>>> getBetween18And40() {
         return ResponseEntity.ok(customerService.getAgeBetween18And40());
     }
 
@@ -64,14 +62,8 @@ public class CustomerController {
      */
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
-    public ResponseEntity<CustomerDTO> getCustomerById(@PathVariable Long id) {
-        CustomerDTO customerDTO = customerService.getCustomer(id);
-
-        if (customerDTO == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);  // Return 404 if not found
-        }
-
-        return new ResponseEntity<>(customerDTO, HttpStatus.OK);  // Return 200 if found
+    public ResponseEntity<ResponseModel<CustomerDTO>> getCustomerById(@PathVariable Long id) {
+        return ResponseEntity.ok(customerService.getCustomer(id));
     }
 
     /**

@@ -1,8 +1,11 @@
 package kdaniel.customers.controller;
 
+import kdaniel.customers.dto.customer.AverageAgeDTO;
 import kdaniel.customers.dto.customer.CustomerDTO;
 import kdaniel.customers.dto.customer.EditCustomerDTO;
+import kdaniel.customers.model.ResponseModel;
 import kdaniel.customers.service.CustomerService;
+import kdaniel.customers.util.FieldValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,8 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -59,29 +61,29 @@ public class CustomerControllerTest {
         customerDTO.setEmail("john.doe@example.com");
         customerDTO.setAge((byte) 30);
 
-        when(customerService.getCustomer(1L)).thenReturn(customerDTO);
+        when(customerService.getCustomer(1L)).thenReturn(new ResponseModel<>(true, customerDTO));
 
         // Act: Call the controller's getCustomerById method (or endpoint)
-        ResponseEntity<CustomerDTO> response = customerController.getCustomerById(1L);
+        ResponseEntity<ResponseModel<CustomerDTO>> response = customerController.getCustomerById(1L);
 
         // Assert: Check that status code is 200 and the customer data matches
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals("John Doe", response.getBody().getFullName());
-        assertEquals("john.doe@example.com", response.getBody().getEmail());
-        assertEquals(30, response.getBody().getAge());
+        assertNotNull(response.getBody().getData());
+        assertEquals("John Doe", response.getBody().getData().getFullName());
+        assertEquals("john.doe@example.com", response.getBody().getData().getEmail());
+        assertEquals(30, response.getBody().getData().getAge());
     }
 
     @Test
     public void testGetCustomerById_NotFound() {
-        // Arrange: Mock the customerService to return null for a non-existing customer
-        when(customerService.getCustomer(999L)).thenReturn(null);
+        when(customerService.getCustomer(999L)).thenThrow(new FieldValidationException("id", "not found"));
 
-        // Act: Call the controller's getCustomerById method (or endpoint)
-        ResponseEntity<CustomerDTO> response = customerController.getCustomerById(999L);
+        FieldValidationException exception = assertThrows(
+                FieldValidationException.class,
+                () -> customerController.getCustomerById(999L)
+        );
 
-        // Assert: Check that status code is 404 (Not Found)
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertTrue(exception.getErrors().containsKey("id"));
     }
 
     @Test
@@ -106,17 +108,16 @@ public class CustomerControllerTest {
     @Test
     public void testGetAverageAge_ReturnAverageAge() {
         // Arrange: Mock a response for average age
-        Map<String, Double> averageAge = new HashMap<>();
-        averageAge.put("averageAge", 30.0);
-        when(customerService.getAverageAge()).thenReturn(averageAge);
+        ResponseModel<AverageAgeDTO> responseModel = new ResponseModel<>(true, new AverageAgeDTO(30.0));
+        when(customerService.getAverageAge()).thenReturn(responseModel);
 
         // Act: Call the controller method directly
-        ResponseEntity<Map<String, Double>> response = customerController.getAverageAge();
+        ResponseEntity<ResponseModel<AverageAgeDTO>> response = customerController.getAverageAge();
 
         // Assert: Verify response
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(30.0, response.getBody().get("averageAge"));
+        assertEquals(30.0, response.getBody().getData().getAverageAge());
     }
 
     @Test
@@ -126,17 +127,18 @@ public class CustomerControllerTest {
                 new CustomerDTO("John Doe", (byte) 25, "john@example.com"),
                 new CustomerDTO("Jane Smith", (byte) 30, "jane@example.com")
         );
-        when(customerService.getAgeBetween18And40()).thenReturn(customers);
+        ResponseModel<List<CustomerDTO>> responseModel = new ResponseModel<>(true, customers);
+        when(customerService.getAgeBetween18And40()).thenReturn(responseModel);
 
         // Act: Call the controller's getBetween18And40 method
-        ResponseEntity<List<CustomerDTO>> response = customerController.getBetween18And40();
+        ResponseEntity<ResponseModel<List<CustomerDTO>>> response = customerController.getBetween18And40();
 
         // Assert: Verify status code and contents
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(2, response.getBody().size());
-        assertEquals("John Doe", response.getBody().get(0).getFullName());
-        assertEquals("Jane Smith", response.getBody().get(1).getFullName());
+        assertEquals(2, response.getBody().getData().size());
+        assertEquals("John Doe", response.getBody().getData().get(0).getFullName());
+        assertEquals("Jane Smith", response.getBody().getData().get(1).getFullName());
     }
 
     @Test

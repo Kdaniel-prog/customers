@@ -1,9 +1,14 @@
 package kdaniel.customers.service;
 
+import kdaniel.customers.dto.auth.TokenDTO;
+import kdaniel.customers.dto.customer.AverageAgeDTO;
 import kdaniel.customers.dto.customer.CustomerDTO;
 import kdaniel.customers.dto.customer.EditCustomerDTO;
+import kdaniel.customers.model.ResponseModel;
 import kdaniel.customers.model.Role;
 import kdaniel.customers.repository.RoleRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
@@ -95,7 +100,7 @@ public class CustomerService implements UserDetailsService {
      * @Return JWTResponseDTO containing the generated token.
      * @Throws FieldValidationException If authentication fails.
      */
-    public Map<String, String> login(LoginDTO request) {
+    public ResponseModel<TokenDTO> login(LoginDTO request) {
         Customer user = customerRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new FieldValidationException("username", "not found"));
 
@@ -108,9 +113,8 @@ public class CustomerService implements UserDetailsService {
                 user.getPassword(),
                 List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName()))
         );
-        Map<String, String> token = new HashMap<>();
-        token.put("token", jwtService.generateToken(userDetails));
-        return token;
+
+        return new ResponseModel<>(true, new TokenDTO(jwtService.generateToken(userDetails)));
     }
 
     /**
@@ -124,7 +128,7 @@ public class CustomerService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return customerRepository.findByUsername(username)
                 .map(UserPrincipal::new)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new FieldValidationException("username", "not found"));
     }
 
     /**
@@ -132,19 +136,16 @@ public class CustomerService implements UserDetailsService {
      * @Return A map containing the average age.
      */
     @Transactional(readOnly = true)
-    public Map<String, Double> getAverageAge() {
+    public ResponseModel<AverageAgeDTO> getAverageAge() {
         try (Stream<Customer> customerStream = customerRepository.streamAllCustomers()) {
             double avg = customerStream
                     .filter(c -> c.getAge() != null)
                     .mapToDouble(Customer::getAge)
                     .average()
                     .orElse(0.0);
-
-            Map<String, Double> result = new HashMap<>();
-            result.put("averageAge", avg);
-            return result;
+            return new ResponseModel<>(true, new AverageAgeDTO(avg));
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new FieldValidationException("averageAge", "error");
         }
     }
 
@@ -153,8 +154,8 @@ public class CustomerService implements UserDetailsService {
      * @Return List of CustomerDTO objects.
      */
     @Transactional(readOnly = true)
-    public List<CustomerDTO> getAgeBetween18And40() {
-        return this.customerRepository.getCustomerBetween18And40();
+    public ResponseModel<List<CustomerDTO>> getAgeBetween18And40() {
+        return new ResponseModel<>(true, this.customerRepository.getCustomerBetween18And40());
     }
 
     /**
@@ -163,8 +164,13 @@ public class CustomerService implements UserDetailsService {
      * @Return CustomerDTO containing customer details.
      */
     @Transactional(readOnly = true)
-    public CustomerDTO getCustomer(Long id) {
-        return this.customerRepository.getCustomer(id);
+    public ResponseModel<CustomerDTO> getCustomer(Long id) {
+
+        CustomerDTO customer = this.customerRepository.getCustomer(id);
+        if(customer == null) {
+            throw new FieldValidationException("id", "not found");
+        }
+        return new ResponseModel<>(true, customer);
     }
 
     /**
