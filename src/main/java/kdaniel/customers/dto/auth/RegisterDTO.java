@@ -2,8 +2,6 @@ package kdaniel.customers.dto.auth;
 
 
 import jakarta.validation.constraints.*;
-import kdaniel.customers.dto.validator.EnumValidator;
-import kdaniel.customers.model.Role;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
