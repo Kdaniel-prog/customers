@@ -15,6 +15,7 @@ Spring Boot REST API JWT alapú authentikációval, H2 adatbázissal.
 | `/customer`                   | GET     | ❌               | ✅                | Összes customer listázása                                                 |
 | `/customer/id`                | DEL     | ❌               | ✅                | customer törlése Id alapján                                               |
 | `/customer/id`                 | GET     | ❌               | ✅                | customer listázása  id alapján                                            | 
+| `/customer`                 | GET     | ❌               | ✅                | customerek listázása pagingel                                      | 
 | `/customer`                   | PUT     | ❌               | ✅                | customer modósítása új token adása saját user modósítása után             |
 | `/customer/avarageAge`        | GET     | ✅               | ✅                | Customer átlag életkor lekérdezése                                        |
 | `/customer/between18And40`    | GET     | ✅               | ✅                | 18 és 40 év közötti customer-ek listázása                                 |
