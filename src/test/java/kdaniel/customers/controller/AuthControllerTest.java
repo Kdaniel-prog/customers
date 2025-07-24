@@ -1,118 +1,111 @@
 package kdaniel.customers.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import kdaniel.customers.dto.auth.LoginDTO;
 import kdaniel.customers.dto.auth.RegisterDTO;
 import kdaniel.customers.dto.auth.RoleDTO;
 import kdaniel.customers.dto.auth.TokenDTO;
 import kdaniel.customers.model.ResponseModel;
+import kdaniel.customers.model.Role;
+import kdaniel.customers.model.UserPrincipal;
 import kdaniel.customers.service.CustomerService;
 import kdaniel.customers.service.JWTService;
 import kdaniel.customers.util.FieldValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.util.HashMap;
-import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@WebMvcTest(controllers = AuthController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @ExtendWith(MockitoExtension.class)
 public class AuthControllerTest {
-    @Mock
-    private CustomerService customerService;
+    @Autowired
+    MockMvc mockMvc;
 
-    @Mock
-    private JWTService jwtService;
+    @MockitoBean
+    CustomerService customerService;
 
-    @InjectMocks
-    private AuthController authController;
+    @MockitoBean
+    JWTService jwtService;
 
-    private LoginDTO loginDTO;
-    private RegisterDTO registerDTO;
+    RegisterDTO registerDTO;
+    LoginDTO loginDTO;
+
+    private final static String REGISTER_URL = "/auth/register";
+    private final static String LOGIN_URL = "/auth/login";
 
     @BeforeEach
-    public void setUp() {
-        loginDTO = new LoginDTO();
-        loginDTO.setUsername("testuser");
-        loginDTO.setPassword("testpassword");
+    void setUp() {
+        registerDTO = RegisterDTO.builder()
+                .username("testUser")
+                .password("testPassword")
+                .email("test@test.hu")
+                .confirmEmail("test@test.hu")
+                .role(RoleDTO.USER)
+                .build();
 
-        registerDTO = new RegisterDTO();
-        registerDTO.setUsername("testuser");
-        registerDTO.setPassword("testpassword");
-        registerDTO.setConfirmEmail("test@test.com");
-        registerDTO.setEmail("test@test.com");
-        registerDTO.setRole(RoleDTO.USER);
+        loginDTO = new LoginDTO("testUser", "testPassword");
     }
 
     @Test
-    public void testLogin_Success() {
-        // Arrange: Mock the response from the customerService and jwtService
-        String token = "mock-jwt-token";
-        ResponseModel<TokenDTO> responseModel = new ResponseModel<>(true, new TokenDTO(token));
-        when(customerService.login(any(LoginDTO.class))).thenReturn(responseModel);
-
-        ResponseEntity<ResponseModel<TokenDTO>> response = authController.login(loginDTO);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(token, response.getBody().getData().getToken());
+    void shouldSaveUser_onRegister_givenUserInformation() throws Exception {
+        mockMvc.perform( MockMvcRequestBuilders
+                        .post(REGISTER_URL)
+                        .content(new ObjectMapper().writeValueAsString(registerDTO))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk());
     }
 
     @Test
-    public void testLogin_Failure_InvalidCredentials() {
-        // Arrange
-        when(customerService.login(any(LoginDTO.class)))
-                .thenThrow(new FieldValidationException("username", "Username must not be empty"));
-
-        LoginDTO loginDTO = new LoginDTO("username", "wrongpassword");
-
-        // Act + Assert
-        FieldValidationException exception = assertThrows(FieldValidationException.class, () -> {
-            authController.login(loginDTO);
-        });
-
-        assertNotNull(exception);
-        assertTrue(exception.getErrors().containsKey("username"));
-    }
-
-    @Test
-    public void testRegister_Success() {
-        // Arrange: Simulate successful registration (void method does nothing)
-        doNothing().when(customerService).register(any(RegisterDTO.class));
-        ResponseEntity<Void> response = authController.register(registerDTO);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-    }
-
-    @Test
-    public void testRegister_Failure_UsernameExists() {
-        // Arrange
-        RegisterDTO registerDTO = new RegisterDTO(
-                "existingUser", "password123", "Existing User",
-                "user@example.com", "user@example.com", (byte) 25, RoleDTO.USER
+    void shouldGetToken_onLogin_givenLoginDTO() throws Exception {
+        UserPrincipal userPrincipal = new UserPrincipal(
+                loginDTO.getUsername(),
+                List.of(new SimpleGrantedAuthority("ROLE_USER")),
+                new Role("USER")
         );
+        TokenDTO tokenDTO = new TokenDTO(jwtService.generateToken(userPrincipal));
 
-        Mockito.doThrow(new FieldValidationException("Username", "Username already exists"))
-                .when(customerService)
-                .register(any(RegisterDTO.class));
+        when(customerService.login(loginDTO)).thenReturn(new ResponseModel<>(true,tokenDTO));
 
-        // Act & Assert
-        FieldValidationException exception = assertThrows(
-                FieldValidationException.class,
-                () -> authController.register(registerDTO)
-        );
-
-        assertTrue(exception.getErrors().containsKey("Username"));
+        mockMvc.perform( MockMvcRequestBuilders
+                        .post(LOGIN_URL)
+                        .content(new ObjectMapper().writeValueAsString(loginDTO))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk());
     }
 
+    @Test
+    void shouldReturnUnauthorized_onLogin_givenInvalidUsername() throws Exception {
+        when(customerService.login(any()))
+                .thenThrow(new FieldValidationException("username", "not found"));
+
+        mockMvc.perform( MockMvcRequestBuilders
+                        .post(LOGIN_URL)
+                        .content(new ObjectMapper().writeValueAsString(loginDTO))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
 }

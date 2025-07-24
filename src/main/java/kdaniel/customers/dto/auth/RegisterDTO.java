@@ -2,15 +2,13 @@ package kdaniel.customers.dto.auth;
 
 
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class RegisterDTO {
     @Max(value = 255, message = "username is too long")
     @NotBlank(message = "Username must not be empty")
