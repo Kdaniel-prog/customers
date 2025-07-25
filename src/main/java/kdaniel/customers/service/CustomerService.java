@@ -6,7 +6,6 @@ import kdaniel.customers.dto.customer.CustomerDTO;
 import kdaniel.customers.dto.customer.EditCustomerDTO;
 import kdaniel.customers.model.ResponseModel;
 import kdaniel.customers.model.Role;
-import kdaniel.customers.repository.RoleRepository;
 import kdaniel.customers.validation.CustomerValidator;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -14,8 +13,6 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.transaction.annotation.Transactional;
 import kdaniel.customers.dto.auth.LoginDTO;
 import kdaniel.customers.dto.auth.RegisterDTO;
@@ -24,15 +21,14 @@ import kdaniel.customers.model.UserPrincipal;
 import kdaniel.customers.repository.CustomerRepository;
 import kdaniel.customers.util.FieldValidationException;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Stream;
+
 /**
  * @Author Kiszel Dániel
  * @Date 2025-04-26
@@ -168,7 +164,7 @@ public class CustomerService implements UserDetailsService {
 
         //save
         this.customerRepository.save(customer);
-        
+
         //return new token
         return generateToken(customer);
     }

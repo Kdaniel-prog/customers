@@ -1,11 +1,15 @@
 package kdaniel.customers.controller;
 
+import jakarta.validation.Valid;
 import kdaniel.customers.dto.auth.TokenDTO;
 import kdaniel.customers.dto.customer.AverageAgeDTO;
 import kdaniel.customers.dto.customer.CustomerDTO;
 import kdaniel.customers.dto.customer.EditCustomerDTO;
 import kdaniel.customers.model.ResponseModel;
 import kdaniel.customers.service.CustomerService;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,14 +31,11 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/customer")
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@AllArgsConstructor
 public class CustomerController {
 
-    private final CustomerService customerService;
-
-    @Autowired
-    public CustomerController(CustomerService customerService) {
-        this.customerService = customerService;
-    }
+    CustomerService customerService;
 
     /**
      * @GetMapping("/customer/averageAge")
@@ -93,7 +94,7 @@ public class CustomerController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping
-    public ResponseEntity<TokenDTO> modifyCustomer(@RequestBody EditCustomerDTO customerDTO) {
+    public ResponseEntity<TokenDTO> modifyCustomer(@Valid @RequestBody EditCustomerDTO customerDTO) {
         return ResponseEntity.ok(this.customerService.editCustomer(customerDTO));
     }
 

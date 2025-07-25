@@ -1,6 +1,9 @@
 package kdaniel.customers.service;
 
 import io.jsonwebtoken.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -19,17 +22,15 @@ import java.util.function.Function;
  *              and authorize users in the application by creating and validating JWT tokens.
  */
 @Service
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class JWTService {
 
-    private final String secretKey;
-    private final Long secretExpiration;
+    @Value("${jwt.secret}")
+    String secretKey;
 
-    // Constructor injection for secretKey and expirationTime
-    public JWTService(@Value("${jwt.secret}") String secretKey,
-                      @Value("${jwt.expiration}") Long secretExpiration) {
-        this.secretKey = secretKey;
-        this.secretExpiration = secretExpiration;
-    }
+    @Value("${jwt.expiration}")
+    Long secretExpiration;
 
     /**
      * Extracts the username (subject) from the given JWT token.

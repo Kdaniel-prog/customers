@@ -1,6 +1,6 @@
 package kdaniel.customers.dto.customer;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import kdaniel.customers.model.Role;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,7 +12,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class EditCustomerDTO {
-    @NotBlank(message = "Id must not be empty")
+    @NotNull(message = "Id must not be empty")
     private Long id;
     private String username;
     private String fullName;
