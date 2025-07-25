@@ -1,6 +1,7 @@
 package kdaniel.customers.dto.customer;
 
 import jakarta.validation.constraints.NotBlank;
+import kdaniel.customers.model.Role;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,4 +19,5 @@ public class EditCustomerDTO {
     private String password;
     private String email;
     private byte age;
+    private Role role;
 }

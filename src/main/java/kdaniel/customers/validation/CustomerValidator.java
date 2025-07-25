@@ -2,9 +2,9 @@ package kdaniel.customers.validation;
 
 import kdaniel.customers.dto.auth.LoginDTO;
 import kdaniel.customers.dto.auth.RegisterDTO;
+import kdaniel.customers.dto.customer.EditCustomerDTO;
 import kdaniel.customers.model.Customer;
 import kdaniel.customers.model.Role;
-import kdaniel.customers.model.UserPrincipal;
 import kdaniel.customers.repository.CustomerRepository;
 import kdaniel.customers.repository.RoleRepository;
 import kdaniel.customers.util.FieldValidationException;
@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -63,5 +64,20 @@ public class CustomerValidator {
         }
 
         return role;
+    }
+
+    public void validateEditDTO(EditCustomerDTO request) {
+        Optional<Customer> editCustomer = this.customerRepository.findCustomerById(request.getId());
+        Map<String, String> errors = new HashMap<>();
+
+
+        if (editCustomer.isEmpty()) {
+            errors.put("customer", "customer not found");
+        }
+
+        if (!errors.isEmpty()) {
+            throw new FieldValidationException(errors);
+        }
+
     }
 }

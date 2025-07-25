@@ -71,15 +71,13 @@ public class CustomerService implements UserDetailsService {
      * @Throws FieldValidationException If authentication fails.
      */
     public ResponseModel<TokenDTO> validateUserAndReturnToken(LoginDTO request) {
+        //validate data
         Customer user = customerValidator.validateLoginDTO(request);
 
-        UserPrincipal userPrincipal = new UserPrincipal(
-                user.getUsername(),
-                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().getName())),
-                user.getRole()
-        );
+        //generate token
+        TokenDTO tokenDTO = generateToken(user);
 
-        return new ResponseModel<>(true, new TokenDTO(jwtService.generateToken(userPrincipal)));
+        return new ResponseModel<>(true, tokenDTO);
     }
 
     /**
@@ -157,42 +155,38 @@ public class CustomerService implements UserDetailsService {
      * @Return A map possibly containing a new JWT token.
      * @Throws FieldValidationException If validation fails.
      */
-    public Map<String, String> editCustomer(EditCustomerDTO editCustomerDTO) {
-        Map<String, String> token = new HashMap<>();
-        Optional<Customer> editCustomer = this.customerRepository.findCustomerById(editCustomerDTO.getId());
+    public TokenDTO editCustomer(EditCustomerDTO editCustomerDTO) {
+        //validate data
+        customerValidator.validateEditDTO(editCustomerDTO);
 
-        if (editCustomer.isEmpty()) {
-            throw new FieldValidationException("user", "not exist");
-        }
+        //Find customer
+        Customer customer = this.customerRepository.findCustomerById(editCustomerDTO.getId()).get();
 
-        modelMapper.map(editCustomerDTO, editCustomer.get());
+        //map new values
+        modelMapper.map(editCustomerDTO, customer);
+        customer.setPassword(encoder.encode(editCustomerDTO.getPassword()));
 
-        if (editCustomerDTO.getPassword() != null) {
-            if (editCustomerDTO.getPassword().length() < 6) {
-                throw new FieldValidationException("password", "Password must be at least 6 characters long.");
-            }
-            editCustomer.get().setPassword(encoder.encode(editCustomerDTO.getPassword()));
-        }
-
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        Optional<Customer> currentUser = this.customerRepository.findCustomerByUsername(currentUsername);
-        if (currentUser.isPresent() && currentUser.get().getId().equals(editCustomerDTO.getId())) {
-            UserPrincipal userPrincipal = new UserPrincipal(
-                    currentUser.get().getUsername(),
-                    List.of(new SimpleGrantedAuthority("ROLE_" + currentUser.get().getRole().getName())),
-                    currentUser.get().getRole()
-                    );
-            token.put("newToken", jwtService.generateToken(userPrincipal));
-        }
-
-        this.customerRepository.save(editCustomer.get());
-
-        return token;
+        //save
+        this.customerRepository.save(customer);
+        
+        //return new token
+        return generateToken(customer);
     }
 
-    public ResponseModel<Page<CustomerDTO>> getCustomers(Pageable pageable) {
+
+    public ResponseModel<Page<CustomerDTO>> getAllCustomersPaged(Pageable pageable) {
         Page<CustomerDTO> customers = customerRepository.findAllCustomers(pageable)
                 .map(customer -> modelMapper.map(customer, CustomerDTO.class));
+
         return new ResponseModel<>(true, customers);
+    }
+
+    private TokenDTO generateToken(Customer customer) {
+        UserPrincipal userPrincipal = new UserPrincipal(
+                customer.getUsername(),
+                List.of(new SimpleGrantedAuthority("ROLE_" + customer.getRole().getName())),
+                customer.getRole()
+        );
+        return new TokenDTO(jwtService.generateToken(userPrincipal));
     }
 }

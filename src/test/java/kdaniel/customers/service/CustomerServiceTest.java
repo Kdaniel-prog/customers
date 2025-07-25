@@ -67,7 +67,7 @@ class CustomerServiceTest {
         // Initialize DTOs and Customer objects
         registerDTO = new RegisterDTO("user1", "password123", "Full Name", "test@example.com", "test@example.com", (byte) 25, RoleDTO.ADMIN);
         loginDTO = new LoginDTO("user1", "password123");
-        editCustomerDTO = new EditCustomerDTO(1L, "user1", "new@example.com", "newPassword123", "etest@test.hu", (byte) 30);
+        editCustomerDTO = new EditCustomerDTO(1L, "user1", "new@example.com", "newPassword123", "etest@test.hu", (byte) 30, role);
         customer = new Customer(1L, "username", "test@example.com", "password123", (byte) 30, role);
 
         ModelMapper modelMapper = new ModelMapper();
@@ -182,10 +182,10 @@ class CustomerServiceTest {
         when(jwtService.generateToken(any(UserDetails.class))).thenReturn("new-jwt-token");
 
         // Act: Hívjuk meg az editCustomer metódust
-        Map<String, String> result = customerService.editCustomer(editCustomerDTO);
+        TokenDTO result = customerService.editCustomer(editCustomerDTO);
 
         // Assert: Ellenőrizzük a token generálást és a mentést
-        assertEquals("new-jwt-token", result.get("newToken"));
+        assertEquals("new-jwt-token", result.getToken());
         verify(customerRepository).save(any(Customer.class));
     }
 

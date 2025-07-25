@@ -1,5 +1,6 @@
 package kdaniel.customers.controller;
 
+import kdaniel.customers.dto.auth.TokenDTO;
 import kdaniel.customers.dto.customer.AverageAgeDTO;
 import kdaniel.customers.dto.customer.CustomerDTO;
 import kdaniel.customers.dto.customer.EditCustomerDTO;
@@ -77,8 +78,8 @@ public class CustomerController {
      */
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping()
-    public ResponseEntity<ResponseModel<Page<CustomerDTO>>>  getCustomers(@PageableDefault(size = 10) Pageable pageable) {
-        return ResponseEntity.ok(customerService.getCustomers(pageable));
+    public ResponseEntity<ResponseModel<Page<CustomerDTO>>> getCustomers(@PageableDefault(size = 10) Pageable pageable) {
+        return ResponseEntity.ok(customerService.getAllCustomersPaged(pageable));
     }
 
     /**
@@ -92,7 +93,7 @@ public class CustomerController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping
-    public ResponseEntity<Map<String, String>> modifyCustomer(@RequestBody EditCustomerDTO customerDTO) {
+    public ResponseEntity<TokenDTO> modifyCustomer(@RequestBody EditCustomerDTO customerDTO) {
         return ResponseEntity.ok(this.customerService.editCustomer(customerDTO));
     }
 

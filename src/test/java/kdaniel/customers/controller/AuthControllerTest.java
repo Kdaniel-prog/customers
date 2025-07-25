@@ -56,6 +56,7 @@ public class AuthControllerTest {
         registerDTO = RegisterDTO.builder()
                 .username("testUser")
                 .password("testPassword")
+                .fullName("test user")
                 .email("test@test.hu")
                 .confirmEmail("test@test.hu")
                 .role(RoleDTO.USER)
