@@ -42,7 +42,7 @@ public class CustomerController {
      */
     @GetMapping("/averageAge")
     public ResponseEntity<ResponseModel<AverageAgeDTO>> getAverageAge() {
-        return ResponseEntity.ok(customerService.getAverageAge());
+        return ResponseEntity.ok(customerService.calculateAverageAge());
     }
 
     /**
@@ -65,7 +65,7 @@ public class CustomerController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<ResponseModel<CustomerDTO>> getCustomerById(@PathVariable Long id) {
-        return ResponseEntity.ok(customerService.getCustomer(id));
+        return ResponseEntity.ok(customerService.getCustomerById(id));
     }
 
     /**

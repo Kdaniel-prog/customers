@@ -13,6 +13,7 @@ import kdaniel.customers.model.Role;
 import kdaniel.customers.repository.CustomerRepository;
 import kdaniel.customers.repository.RoleRepository;
 import kdaniel.customers.util.FieldValidationException;
+import kdaniel.customers.validation.CustomerValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
@@ -70,7 +71,7 @@ class CustomerServiceTest {
         customer = new Customer(1L, "username", "test@example.com", "password123", (byte) 30, role);
 
         ModelMapper modelMapper = new ModelMapper();
-        customerService = new CustomerService(customerRepository, roleRepository, jwtService, modelMapper, new BCryptPasswordEncoder());
+        customerService = new CustomerService(customerRepository, jwtService, modelMapper, new BCryptPasswordEncoder(), new CustomerValidator(customerRepository, roleRepository, encoder));
         Authentication authentication = mock(Authentication.class);
         when(authentication.getName()).thenReturn("username");
 
@@ -88,7 +89,7 @@ class CustomerServiceTest {
         when(roleRepository.findByName(String.valueOf(registerDTO.getRole()))).thenReturn(Optional.of(new Role("USER")));
 
         // Act: Call register method
-        customerService.register(registerDTO);
+        customerService.validateAndSaveUser(registerDTO);
 
         // Assert: Verify repository methods were called and customer was saved
         verify(customerRepository).save(any(Customer.class));
@@ -101,7 +102,7 @@ class CustomerServiceTest {
 
         // Act & Assert: FieldValidationException should be thrown
         FieldValidationException exception = assertThrows(FieldValidationException.class, () -> {
-            customerService.register(registerDTO);
+            customerService.validateAndSaveUser(registerDTO);
         });
         assertTrue(exception.getErrors().containsKey("email"));
     }
@@ -118,7 +119,7 @@ class CustomerServiceTest {
         LoginDTO loginDTO = new LoginDTO("username", "password123");
 
         try {
-            ResponseModel<TokenDTO> response = customerService.login(loginDTO);
+            ResponseModel<TokenDTO> response = customerService.validateUserAndReturnToken(loginDTO);
             assertNotNull(response);
         } catch (FieldValidationException e) {
             fail("Login failed with valid credentials");
@@ -132,7 +133,7 @@ class CustomerServiceTest {
         when(encoder.matches(loginDTO.getPassword(), customer.getPassword())).thenReturn(false);
 
         // Act & Assert: FieldValidationException should be thrown for bad password
-        FieldValidationException exception = assertThrows(FieldValidationException.class, () -> customerService.login(loginDTO));
+        FieldValidationException exception = assertThrows(FieldValidationException.class, () -> customerService.validateUserAndReturnToken(loginDTO));
         assertTrue(exception.getErrors().containsKey("password"));
     }
 
@@ -146,7 +147,7 @@ class CustomerServiceTest {
         when(customerRepository.streamAllCustomers()).thenReturn(Stream.of(customer, customer1, customer2));
 
         // Act: Call getAverageAge method
-        ResponseModel<AverageAgeDTO> result = customerService.getAverageAge();
+        ResponseModel<AverageAgeDTO> result = customerService.calculateAverageAge();
 
         // Assert: Verify average age calculation
         assertEquals(30, result.getData().getAverageAge());

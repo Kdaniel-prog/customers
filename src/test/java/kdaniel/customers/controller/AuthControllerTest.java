@@ -84,7 +84,7 @@ public class AuthControllerTest {
         );
         TokenDTO tokenDTO = new TokenDTO(jwtService.generateToken(userPrincipal));
 
-        when(customerService.login(loginDTO)).thenReturn(new ResponseModel<>(true,tokenDTO));
+        when(customerService.validateUserAndReturnToken(loginDTO)).thenReturn(new ResponseModel<>(true,tokenDTO));
 
         mockMvc.perform( MockMvcRequestBuilders
                         .post(LOGIN_URL)
@@ -97,7 +97,7 @@ public class AuthControllerTest {
 
     @Test
     void shouldReturnUnauthorized_onLogin_givenInvalidUsername() throws Exception {
-        when(customerService.login(any()))
+        when(customerService.validateUserAndReturnToken(any()))
                 .thenThrow(new FieldValidationException("username", "not found"));
 
         mockMvc.perform( MockMvcRequestBuilders

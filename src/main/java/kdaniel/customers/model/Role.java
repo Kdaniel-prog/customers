@@ -1,9 +1,7 @@
 package kdaniel.customers.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serializable;
 
@@ -11,6 +9,8 @@ import java.io.Serializable;
 @Setter
 @Entity
 @NoArgsConstructor
+@Builder
+@AllArgsConstructor
 @Table(name = "role")
 public class Role implements Serializable {
 

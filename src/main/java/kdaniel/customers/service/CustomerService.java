@@ -7,6 +7,10 @@ import kdaniel.customers.dto.customer.EditCustomerDTO;
 import kdaniel.customers.model.ResponseModel;
 import kdaniel.customers.model.Role;
 import kdaniel.customers.repository.RoleRepository;
+import kdaniel.customers.validation.CustomerValidator;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -36,61 +40,27 @@ import java.util.stream.Stream;
  * Handles registration, login, user authentication, and customer data processing.
  */
 @Service
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CustomerService implements UserDetailsService {
-    private final CustomerRepository customerRepository;
-    private final RoleRepository roleRepository;
-    private final JWTService jwtService;
-    private final ModelMapper modelMapper;
-    private final BCryptPasswordEncoder encoder;
-
-    @Autowired
-    public CustomerService(
-            CustomerRepository customerRepository,
-            RoleRepository roleRepository,
-            JWTService jwtService,
-            ModelMapper modelMapper,
-            BCryptPasswordEncoder encoder) {
-        this.customerRepository = customerRepository;
-        this.roleRepository = roleRepository;
-        this.jwtService = jwtService;
-        this.modelMapper = modelMapper;
-        this.encoder = encoder;
-    }
+    CustomerRepository customerRepository;
+    JWTService jwtService;
+    ModelMapper modelMapper;
+    BCryptPasswordEncoder encoder;
+    CustomerValidator customerValidator;
 
     /**
      * @Description Registers a new customer after validating the provided information.
      * @Param request The registration request containing user details.
      * @Throws FieldValidationException If validation fails.
      */
-    public void register(RegisterDTO request) {
-        Map<String, String> errors = new HashMap<>();
-
-        Role role = roleRepository.findByName(String.valueOf(request.getRole()))
-                .orElse(null);
-
-        if (role == null) {
-            errors.put("role", "Role not found");
-        }
-
-        if (!request.getEmail().equals(request.getConfirmEmail())) {
-            errors.put("confirmEmail", "Emails do not match");
-        }
-
-        if (customerRepository.existsByEmail(request.getEmail())) {
-            errors.put("email", "Email is already taken");
-        }
-
-        if (customerRepository.existsByUsername(request.getUsername())) {
-            errors.put("username", "Username already exists");
-        }
-
-        if (!errors.isEmpty()) {
-            throw new FieldValidationException(errors);
-        }
+    public void validateAndSaveUser(RegisterDTO request) {
+        Role role = customerValidator.validateRegisterDTO(request);
 
         Customer user = modelMapper.map(request, Customer.class);
         user.setPassword(encoder.encode(request.getPassword()));
         user.setRole(role);
+
         customerRepository.save(user);
     }
 
@@ -100,13 +70,8 @@ public class CustomerService implements UserDetailsService {
      * @Return JWTResponseDTO containing the generated token.
      * @Throws FieldValidationException If authentication fails.
      */
-    public ResponseModel<TokenDTO> login(LoginDTO request) {
-        Customer user = customerRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new FieldValidationException("username", "not found"));
-
-        if (!encoder.matches(request.getPassword(), user.getPassword())) {
-            throw new FieldValidationException("password", "bad password");
-        }
+    public ResponseModel<TokenDTO> validateUserAndReturnToken(LoginDTO request) {
+        Customer user = customerValidator.validateLoginDTO(request);
 
         UserPrincipal userPrincipal = new UserPrincipal(
                 user.getUsername(),
@@ -136,7 +101,7 @@ public class CustomerService implements UserDetailsService {
      * @Return A map containing the average age.
      */
     @Transactional(readOnly = true)
-    public ResponseModel<AverageAgeDTO> getAverageAge() {
+    public ResponseModel<AverageAgeDTO> calculateAverageAge() {
         try (Stream<Customer> customerStream = customerRepository.streamAllCustomers()) {
             double avg = customerStream
                     .filter(c -> c.getAge() != null)
@@ -164,8 +129,7 @@ public class CustomerService implements UserDetailsService {
      * @Return CustomerDTO containing customer details.
      */
     @Transactional(readOnly = true)
-    public ResponseModel<CustomerDTO> getCustomer(Long id) {
-
+    public ResponseModel<CustomerDTO> getCustomerById(Long id) {
         CustomerDTO customer = this.customerRepository.getCustomer(id);
         if(customer == null) {
             throw new FieldValidationException("id", "not found");

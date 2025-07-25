@@ -10,16 +10,16 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 public class RegisterDTO {
-    @Max(value = 255, message = "username is too long")
+
+    @Size(max = 255, message = "username is too long")
     @NotBlank(message = "Username must not be empty")
     private String username;
 
-    @Max(value = 255, message = "password is too long")
-    @Min(value = 6, message = "Password must be 6 characters")
+    @Size(min = 6, max = 255, message = "Password must be between 6 and 255 characters")
     @NotBlank(message = "Password must not be empty")
     private String password;
 
-    @Max(value = 255, message = "fullName is too long")
+    @Size(max = 255, message = "fullName is too long")
     @NotBlank(message = "Full name must not be empty")
     private String fullName;
 
@@ -37,5 +37,4 @@ public class RegisterDTO {
 
     @NotNull(message = "Role must not be empty")
     private RoleDTO role;
-
 }
